@@ -1,6 +1,8 @@
-const SIZE_PX = 56;
-const HALO_PX = 14;
-const CORE_PX = 7;
+const SIZE_PX = 20;
+const HALO_PX = 11;
+const CORE_PX = 5;
+const RING_BORDER = "0.5px";
+const CORE_BORDER = "0.5px";
 /**
  * Pulsing quiz marker — centered by parent (parent uses % + translate -50%).
  * Inspect in DevTools: `.quiz-pulse-marker` (root), rings are `.quiz-pulse-ring`.
@@ -43,7 +45,7 @@ export default function QuizPulseMarker() {
             marginTop: -haloHalf,
             borderRadius: "50%",
             background: "rgba(0, 0, 0, 0.7)",
-            border: "2px solid rgba(255, 255, 255, 0.5)",
+            border: "1px solid rgba(255, 255, 255, 0.5)",
           }}
         />
         {[0, 0.38, 0.76].map((delay) => (
@@ -60,10 +62,10 @@ export default function QuizPulseMarker() {
               marginLeft: -half,
               marginTop: -half,
               borderRadius: "50%",
-              border: "4px solid #ffffff",
-              backgroundColor: "rgba(250, 204, 21, 0.65)",
+              border: `${RING_BORDER} solid #ffffff`,
+              backgroundColor: "rgba(250, 204, 21, 0.55)",
               boxShadow:
-                "0 0 0 3px #000000, 0 0 20px 10px rgba(250, 204, 21, 0.95)",
+                "0 0 0 1.5px #000000, 0 0 12px 5px rgba(250, 204, 21, 0.85)",
               animation: "quizPulseExpand 1.2s ease-out infinite",
               animationDelay: `${delay}s`,
             }}
@@ -82,9 +84,9 @@ export default function QuizPulseMarker() {
             marginTop: -coreHalf,
             borderRadius: "50%",
             backgroundColor: "#facc15",
-            border: "4px solid #ffffff",
+            border: `${CORE_BORDER} solid #ffffff`,
             boxShadow:
-              "0 0 0 4px #000000, 0 0 24px 12px rgba(250, 204, 21, 0.95)",
+              "0 0 0 1.5px #000000, 0 0 14px 6px rgba(250, 204, 21, 0.9)",
             animation: "quizPulseCore 0.9s ease-in-out infinite",
           }}
         />

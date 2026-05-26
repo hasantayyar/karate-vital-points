@@ -43,7 +43,7 @@ function SideToggle({
 
 export default function App() {
   const { data } = usePoints();
-  const [mode, setMode] = useState<GameMode>("edit");
+  const [mode, setMode] = useState<GameMode>("study");
   const [side, setSide] = useState<BodySide>("front");
 
   const [flashTarget, setFlashTarget] = useState<PlacedVitalPoint | null>(null);
