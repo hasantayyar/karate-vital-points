@@ -1,7 +1,6 @@
-const SIZE_PX = 120;
-const HALO_PX = 66;
-const CORE_PX = 28;
-
+const SIZE_PX = 56;
+const HALO_PX = 14;
+const CORE_PX = 7;
 /**
  * Pulsing quiz marker — centered by parent (parent uses % + translate -50%).
  * Inspect in DevTools: `.quiz-pulse-marker` (root), rings are `.quiz-pulse-ring`.

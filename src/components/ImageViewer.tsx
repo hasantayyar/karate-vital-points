@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { clientToPercent, svgViewBoxWidth } from "../lib/imageCoords";
 import {
   dotKey,
@@ -57,16 +65,37 @@ export default function ImageViewer({
   tapNearestDot = false,
 }: ImageViewerProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
   const [imageReady, setImageReady] = useState(false);
   const [imageAspect, setImageAspect] = useState(1);
   const [hoveredDotKey, setHoveredDotKey] = useState<string | null>(null);
   const [pinnedDotKey, setPinnedDotKey] = useState<string | null>(null);
   const labelId = useId();
 
+  const syncImageFromElement = useCallback(() => {
+    const img = imgRef.current;
+    if (!img || img.naturalWidth <= 0 || img.naturalHeight <= 0) return;
+    setImageAspect(img.naturalWidth / img.naturalHeight);
+    setImageReady(true);
+  }, []);
+
   useEffect(() => {
     setImageReady(false);
     setImageAspect(1);
   }, [imageSrc]);
+
+  // Cached images often skip onLoad; opening DevTools only resized the page before.
+  useLayoutEffect(() => {
+    syncImageFromElement();
+  }, [imageSrc, syncImageFromElement]);
+
+  useEffect(() => {
+    const img = imgRef.current;
+    if (!img) return;
+    const observer = new ResizeObserver(() => syncImageFromElement());
+    observer.observe(img);
+    return () => observer.disconnect();
+  }, [imageSrc, syncImageFromElement]);
 
   const viewBoxW = svgViewBoxWidth(imageAspect);
 
@@ -181,17 +210,12 @@ export default function ImageViewer({
         role={isEditMode ? "application" : undefined}
       >
         <img
+          ref={imgRef}
           src={imageSrc}
           alt={`${side === "front" ? "Front" : "Back"} view vital points diagram`}
           className="pointer-events-none block h-auto w-full select-none"
           draggable={false}
-          onLoad={(e) => {
-            const img = e.currentTarget;
-            if (img.naturalWidth > 0 && img.naturalHeight > 0) {
-              setImageAspect(img.naturalWidth / img.naturalHeight);
-            }
-            setImageReady(true);
-          }}
+          onLoad={syncImageFromElement}
         />
 
         {imageReady && (
@@ -348,20 +372,21 @@ export default function ImageViewer({
                 );
               })}
 
-              {showQuizPulse && quizPulseCoords && (
-                <div
-                  className="quiz-pulse-anchor absolute z-[99999] touch-manipulation"
-                  style={{
-                    left: `${quizPulseCoords.x}%`,
-                    top: `${quizPulseCoords.y}%`,
-                    transform: "translate(-50%, -50%)",
-                  }}
-                >
-                  <QuizPulseMarker />
-                </div>
-              )}
             </div>
           </>
+        )}
+
+        {showQuizPulse && quizPulseCoords && (
+          <div
+            className="quiz-pulse-anchor pointer-events-none absolute z-[99999]"
+            style={{
+              left: `${quizPulseCoords.x}%`,
+              top: `${quizPulseCoords.y}%`,
+              transform: "translate(-50%, -50%)",
+            }}
+          >
+            <QuizPulseMarker />
+          </div>
         )}
       </div>
 
