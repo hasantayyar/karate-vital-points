@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+body {
+  @apply min-h-screen bg-stone-950 text-stone-100 antialiased;
+}
+
+/* Flashcard / study pulse rings on diagram dots */
+.quiz-ping-ring {
+  animation: quiz-pulse-expand 1.25s ease-out infinite;
+}
+
+@keyframes quiz-pulse-expand {
+  0% {
+    transform: scale(0.55);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.35);
+    opacity: 0;
+  }
+}
+
+/* Quiz identify — expanding rings (always animates, even with reduced-motion) */
+.quiz-pulse-ring {
+  animation: quiz-pulse-ring 1.15s cubic-bezier(0, 0, 0.2, 1) infinite;
+  box-shadow:
+    0 0 0 3px #000,
+    0 0 28px 12px rgba(250, 204, 21, 0.95);
+  will-change: transform, opacity;
+}
+
+@keyframes quiz-pulse-ring {
+  0% {
+    transform: scale(0.4);
+    opacity: 0.95;
+  }
+  75% {
+    opacity: 0.35;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}

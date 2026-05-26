@@ -1,0 +1,448 @@
+{
+  "front": [
+    {
+      "id": "front-1",
+      "order": 1,
+      "name": "Seiten",
+      "positions": [
+        {
+          "x": 27.23,
+          "y": 10.38
+        }
+      ]
+    },
+    {
+      "id": "front-2",
+      "order": 2,
+      "name": "Tento",
+      "positions": [
+        {
+          "x": 27.32,
+          "y": 12.31
+        }
+      ]
+    },
+    {
+      "id": "front-3",
+      "order": 3,
+      "name": "Choto",
+      "positions": [
+        {
+          "x": 27.32,
+          "y": 13.75
+        }
+      ]
+    },
+    {
+      "id": "front-4",
+      "order": 4,
+      "name": "Kasumi",
+      "positions": [
+        {
+          "x": 24.23,
+          "y": 12.75
+        },
+        {
+          "x": 30.33,
+          "y": 12.75
+        }
+      ]
+    },
+    {
+      "id": "front-5",
+      "order": 5,
+      "name": "Jinchu",
+      "positions": [
+        {
+          "x": 26.37,
+          "y": 14.5
+        },
+        {
+          "x": 28.69,
+          "y": 14.5
+        }
+      ]
+    },
+    {
+      "id": "front-6",
+      "order": 6,
+      "name": "Gekon",
+      "positions": [
+        {
+          "x": 27.32,
+          "y": 15.75
+        }
+      ]
+    },
+    {
+      "id": "front-7",
+      "order": 7,
+      "name": "Shichu",
+      "positions": [
+        {
+          "x": 24.66,
+          "y": 17.44
+        },
+        {
+          "x": 30.15,
+          "y": 17.44
+        }
+      ]
+    },
+    {
+      "id": "front-8",
+      "order": 8,
+      "name": "Murasame",
+      "positions": [
+        {
+          "x": 24.05,
+          "y": 18.06
+        },
+        {
+          "x": 30.58,
+          "y": 18.06
+        }
+      ]
+    },
+    {
+      "id": "front-9",
+      "order": 9,
+      "name": "Matsukaze",
+      "positions": [
+        {
+          "x": 24.4,
+          "y": 19.06
+        },
+        {
+          "x": 30.41,
+          "y": 19.06
+        }
+      ]
+    },
+    {
+      "id": "front-10",
+      "order": 10,
+      "name": "Danchu",
+      "positions": [
+        {
+          "x": 27.66,
+          "y": 19.75
+        }
+      ]
+    },
+    {
+      "id": "front-11",
+      "order": 11,
+      "name": "Waki-in",
+      "positions": [
+        {
+          "x": 21.65,
+          "y": 19.88
+        },
+        {
+          "x": 33.68,
+          "y": 19.94
+        }
+      ]
+    },
+    {
+      "id": "front-12",
+      "order": 12,
+      "name": "Ganka",
+      "positions": [
+        {
+          "x": 23.88,
+          "y": 22.12
+        },
+        {
+          "x": 31.62,
+          "y": 22.12
+        }
+      ]
+    },
+    {
+      "id": "front-13",
+      "order": 13,
+      "name": "Suigetsu",
+      "positions": [
+        {
+          "x": 27.66,
+          "y": 23.69
+        }
+      ]
+    },
+    {
+      "id": "front-14",
+      "order": 14,
+      "name": "Danko",
+      "positions": [
+        {
+          "x": 23.63,
+          "y": 25.31
+        }
+      ]
+    },
+    {
+      "id": "front-15",
+      "order": 15,
+      "name": "Tsukikage",
+      "positions": [
+        {
+          "x": 31.87,
+          "y": 25.37
+        }
+      ]
+    },
+    {
+      "id": "front-16",
+      "order": 16,
+      "name": "Myosho",
+      "positions": [
+        {
+          "x": 27.58,
+          "y": 28.25
+        }
+      ]
+    },
+    {
+      "id": "front-17",
+      "order": 17,
+      "name": "Kinteki",
+      "positions": [
+        {
+          "x": 27.66,
+          "y": 31.62
+        }
+      ]
+    },
+    {
+      "id": "front-18",
+      "order": 18,
+      "name": "Senryu",
+      "positions": [
+        {
+          "x": 24.4,
+          "y": 31.87
+        }
+      ]
+    },
+    {
+      "id": "front-19",
+      "order": 19,
+      "name": "Yako",
+      "positions": [
+        {
+          "x": 31.01,
+          "y": 31.87
+        }
+      ]
+    },
+    {
+      "id": "front-20",
+      "order": 20,
+      "name": "Futto",
+      "positions": [
+        {
+          "x": 19.24,
+          "y": 34.06
+        },
+        {
+          "x": 36.6,
+          "y": 34.25
+        }
+      ]
+    },
+    {
+      "id": "front-21",
+      "order": 21,
+      "name": "Kokotsu",
+      "positions": [
+        {
+          "x": 18.47,
+          "y": 40.12
+        },
+        {
+          "x": 37.89,
+          "y": 40.06
+        }
+      ]
+    },
+    {
+      "id": "front-22",
+      "order": 22,
+      "name": "Kori",
+      "positions": [
+        {
+          "x": 16.58,
+          "y": 44.81
+        },
+        {
+          "x": 38.57,
+          "y": 45.81
+        }
+      ]
+    },
+    {
+      "id": "front-23",
+      "order": 23,
+      "name": "Soin",
+      "positions": [
+        {
+          "x": 41.24,
+          "y": 44.81
+        }
+      ]
+    },
+    {
+      "id": "front-24",
+      "order": 24,
+      "name": "Uchi-kurobushi",
+      "positions": [
+        {
+          "x": 19.16,
+          "y": 44.94
+        },
+        {
+          "x": 36.17,
+          "y": 44.94
+        }
+      ]
+    }
+  ],
+  "back": [
+    {
+      "id": "back-1",
+      "order": 1,
+      "name": "Dokko",
+      "positions": [
+        {
+          "x": 61.94,
+          "y": 12.81
+        },
+        {
+          "x": 68.56,
+          "y": 12.81
+        }
+      ]
+    },
+    {
+      "id": "back-2",
+      "order": 2,
+      "name": "Keichu",
+      "positions": [
+        {
+          "x": 65.21,
+          "y": 15.69
+        }
+      ]
+    },
+    {
+      "id": "back-3",
+      "order": 3,
+      "name": "Soda",
+      "positions": [
+        {
+          "x": 65.12,
+          "y": 17.5
+        }
+      ]
+    },
+    {
+      "id": "back-4",
+      "order": 4,
+      "name": "Sakkatsu",
+      "positions": [
+        {
+          "x": 65.12,
+          "y": 20.0
+        }
+      ]
+    },
+    {
+      "id": "back-5",
+      "order": 5,
+      "name": "Ushiro-denko",
+      "positions": [
+        {
+          "x": 62.29,
+          "y": 24.12
+        },
+        {
+          "x": 66.84,
+          "y": 24.12
+        }
+      ]
+    },
+    {
+      "id": "back-6",
+      "order": 6,
+      "name": "Bitei",
+      "positions": [
+        {
+          "x": 65.12,
+          "y": 30.56
+        }
+      ]
+    },
+    {
+      "id": "back-7",
+      "order": 7,
+      "name": "Ushiro-inazuma",
+      "positions": [
+        {
+          "x": 61.86,
+          "y": 32.5
+        },
+        {
+          "x": 67.18,
+          "y": 32.5
+        }
+      ]
+    },
+    {
+      "id": "back-8",
+      "order": 8,
+      "name": "Sobi",
+      "positions": [
+        {
+          "x": 59.02,
+          "y": 41.62
+        },
+        {
+          "x": 71.65,
+          "y": 41.62
+        }
+      ]
+    },
+    {
+      "id": "back-9",
+      "order": 9,
+      "name": "Soin",
+      "positions": [
+        {
+          "x": 53.09,
+          "y": 45.25
+        },
+        {
+          "x": 79.04,
+          "y": 45.25
+        }
+      ]
+    },
+    {
+      "id": "back-10",
+      "order": 10,
+      "name": "Soto-kurobushi",
+      "positions": [
+        {
+          "x": 58.59,
+          "y": 45.5
+        },
+        {
+          "x": 73.28,
+          "y": 45.5
+        }
+      ]
+    }
+  ]
+}
