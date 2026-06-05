@@ -2,6 +2,13 @@
 
 body {
   @apply min-h-screen bg-stone-950 text-stone-100 antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.diagram-viewport {
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 /* Flashcard / study pulse rings on diagram dots */
