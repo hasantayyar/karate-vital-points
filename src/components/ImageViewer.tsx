@@ -7,7 +7,11 @@ import {
   useRef,
   useState,
 } from "react";
-import { clientToPercent, svgViewBoxWidth } from "../lib/imageCoords";
+import {
+  clientToPercent,
+  svgViewBoxWidth,
+  vitalPointsImageSrc,
+} from "../lib/imageCoords";
 import {
   dotKey,
   findNearestDot,
@@ -49,7 +53,7 @@ export interface ImageViewerProps {
 export default function ImageViewer({
   side,
   points,
-  imageSrc = `${import.meta.env.BASE_URL}vital-points.jpeg`,
+  imageSrc,
   mode,
   highlightedPointId = null,
   selectedPointId = null,
@@ -64,6 +68,8 @@ export default function ImageViewer({
   interactive = true,
   tapNearestDot = false,
 }: ImageViewerProps) {
+  const resolvedImageSrc = imageSrc ?? vitalPointsImageSrc(side);
+
   const overlayRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
   const [imageReady, setImageReady] = useState(false);
@@ -82,12 +88,12 @@ export default function ImageViewer({
   useEffect(() => {
     setImageReady(false);
     setImageAspect(1);
-  }, [imageSrc]);
+  }, [resolvedImageSrc]);
 
   // Cached images often skip onLoad; opening DevTools only resized the page before.
   useLayoutEffect(() => {
     syncImageFromElement();
-  }, [imageSrc, syncImageFromElement]);
+  }, [resolvedImageSrc, syncImageFromElement]);
 
   useEffect(() => {
     const img = imgRef.current;
@@ -95,7 +101,7 @@ export default function ImageViewer({
     const observer = new ResizeObserver(() => syncImageFromElement());
     observer.observe(img);
     return () => observer.disconnect();
-  }, [imageSrc, syncImageFromElement]);
+  }, [resolvedImageSrc, syncImageFromElement]);
 
   const viewBoxW = svgViewBoxWidth(imageAspect);
 
@@ -211,7 +217,7 @@ export default function ImageViewer({
       >
         <img
           ref={imgRef}
-          src={imageSrc}
+          src={resolvedImageSrc}
           alt={`${side === "front" ? "Front" : "Back"} view vital points diagram`}
           className="pointer-events-none block h-auto w-full select-none"
           draggable={false}

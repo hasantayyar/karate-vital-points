@@ -82,7 +82,9 @@ export default function CoordinateEditor({ side }: CoordinateEditorProps) {
         <ol className="mt-2 list-decimal space-y-1 pl-4 text-amber-100/80">
           <li>
             Put your diagram at{" "}
-            <code className="text-amber-300">public/vital-points.jpeg</code>
+            <code className="text-amber-300">public/vital-points-front.jpeg</code>{" "}
+            and{" "}
+            <code className="text-amber-300">public/vital-points-back.jpeg</code>
           </li>
           <li>
             Select a point, then <strong>click each location</strong> on the image
