@@ -1,6 +1,8 @@
 # Kyusho Memory — Shito-Ryu Vital Points
 
-A React memory trainer for the 34 Shito-Ryu kyusho (vital points).
+A memory trainer for the 34 **Shito-Ryu kyusho** __e(vital points)__.
+
+Preview: [hasantayyar.github.io/karate-vital-points/](https://hasantayyar.github.io/karate-vital-points/)
 
 ## Stack
 
@@ -12,6 +14,7 @@ A React memory trainer for the 34 Shito-Ryu kyusho (vital points).
 
 ```bash
 npm install
+npm run build
 npm run dev
 ```
 
@@ -48,43 +51,6 @@ Progress is auto-saved in the browser until you export. Legacy `{ "x", "y" }` en
 - **Study** — tap dots to see names
 - **Flashcards** — name prompt, click the correct dot; missed points are weighted higher via `localStorage`
 - **Quiz** — 10-question round mixing **Locate** (name → tap dot, like flashcards) and **Identify** (pulsing dot → pick the name from four choices); results screen at the end
-
-## Deploy to GitHub Pages (automatic)
-
-Every push to **`main`** builds and deploys via GitHub Actions (see `.github/workflows/deploy-pages.yml`).
-
-Live URL (project site):
-
-`https://<github-username>.github.io/<repo-name>/`
-
-Example: if the repo is named `karate` → `https://youruser.github.io/karate/`
-
-### One-time GitHub setup
-
-1. Push this repo to GitHub (see below).
-2. Open the repo on GitHub → **Settings** → **Pages**.
-3. Under **Build and deployment** → **Source**, choose **GitHub Actions** (not “Deploy from a branch”).
-4. Push to `main` (or run the workflow manually under **Actions**).
-
-After the workflow succeeds, your site is live at the URL above.
-
-### First push from your machine
-
-```bash
-cd /path/to/karate-vital-points-memory
-
-# If you staged node_modules by mistake, unstage everything first:
-git rm -r --cached . 2>/dev/null || true
-
-git add .
-git commit -m "Initial commit: Kyusho memory trainer with GitHub Pages deploy"
-
-git remote add origin https://github.com/YOUR_USER/YOUR_REPO.git
-git branch -M main
-git push -u origin main
-```
-
-Replace `YOUR_USER` and `YOUR_REPO`. **Repo name = URL path** (e.g. repo `karate` → `/karate/`).
 
 ### Local production preview
 
