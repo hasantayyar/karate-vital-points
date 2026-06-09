@@ -78,8 +78,13 @@ export default function App() {
     setLastFlashCorrect(null);
   }, [placedOnSide]);
 
+  useEffect(() => {
+    setStudyHighlightId(null);
+  }, [side, mode]);
+
   const handleModeChange = (next: GameMode) => {
     setMode(next);
+    setStudyHighlightId(null);
     setFlashFeedback({});
     setFlashAnswered(false);
     setLastFlashCorrect(null);
@@ -139,7 +144,8 @@ export default function App() {
 
         {mode === "study" && (
           <p className="text-center text-sm text-stone-400">
-            Hover or press a dot to see its number and name. Tap again to dismiss.
+            Hover or press a dot on the diagram, or tap a name in the list below to
+            highlight it.
           </p>
         )}
 
@@ -200,10 +206,24 @@ export default function App() {
             points={sidePoints}
             mode={mode}
             highlightedPointId={
-              mode === "flashcards" && flashAnswered ? flashTarget?.id : null
+              mode === "study"
+                ? studyHighlightId
+                : mode === "flashcards" && flashAnswered
+                  ? flashTarget?.id
+                  : null
             }
+            selectedPointId={mode === "study" ? studyHighlightId : null}
             feedbackByPointId={mode === "flashcards" ? flashFeedback : {}}
-            onDotClick={mode === "flashcards" ? handleFlashcardClick : undefined}
+            onDotClick={
+              mode === "flashcards"
+                ? handleFlashcardClick
+                : mode === "study"
+                  ? (dot) =>
+                      setStudyHighlightId((prev) =>
+                        prev === dot.pointId ? null : dot.pointId,
+                      )
+                  : undefined
+            }
             interactive={mode === "flashcards" ? !flashAnswered : true}
             tapNearestDot={mode === "flashcards" && !flashAnswered}
           />
@@ -211,21 +231,34 @@ export default function App() {
 
         {mode === "study" && (
           <ul className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-3">
-            {sidePoints.map((p) => (
-              <li
-                key={p.id}
-                className={`rounded-md border px-2 py-1.5 ${
-                  hasCoordinates(p)
-                    ? "border-stone-700 text-stone-300"
-                    : "border-stone-800 text-stone-600"
-                }`}
-              >
-                <span className="text-stone-500">{p.order}.</span> {p.name}
-                {positionCount(p) > 1 && (
-                  <span className="text-stone-500"> ({positionCount(p)})</span>
-                )}
-              </li>
-            ))}
+            {sidePoints.map((p) => {
+              const placed = hasCoordinates(p);
+              const isHighlighted = studyHighlightId === p.id;
+
+              return (
+                <li key={p.id}>
+                  <button
+                    type="button"
+                    disabled={!placed}
+                    onClick={() =>
+                      setStudyHighlightId((prev) => (prev === p.id ? null : p.id))
+                    }
+                    className={`w-full rounded-md border px-2 py-1.5 text-left transition-colors ${
+                      isHighlighted
+                        ? "border-amber-500/70 bg-amber-950/50 text-amber-100 ring-1 ring-amber-500/40"
+                        : placed
+                          ? "border-stone-700 text-stone-300 hover:border-stone-600 hover:bg-stone-800/60"
+                          : "cursor-not-allowed border-stone-800 text-stone-600"
+                    }`}
+                  >
+                    <span className="text-stone-500">{p.order}.</span> {p.name}
+                    {positionCount(p) > 1 && (
+                      <span className="text-stone-500"> ({positionCount(p)})</span>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         )}
       </main>
