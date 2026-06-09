@@ -80,7 +80,9 @@ export default function ImageViewer({
   interactive = true,
   tapNearestDot = false,
 }: ImageViewerProps) {
-  const resolvedImageSrc = imageSrc ?? vitalPointsImageSrc(side);
+  const imageVariant =
+    mode === "flashcards" || mode === "quiz" ? "no-clue" : "default";
+  const resolvedImageSrc = imageSrc ?? vitalPointsImageSrc(side, imageVariant);
   const coarsePointer = useCoarsePointer();
   const touchTargetPx = coarsePointer ? TOUCH_TARGET_MOBILE : TOUCH_TARGET_DESKTOP;
 
