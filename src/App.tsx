@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { CheckCircle2, RotateCcw, XCircle } from "lucide-react";
 import CoordinateEditor from "./components/CoordinateEditor";
 import ImageViewer from "./components/ImageViewer";
@@ -53,6 +53,7 @@ export default function App() {
   const [flashAnswered, setFlashAnswered] = useState(false);
   const [lastFlashCorrect, setLastFlashCorrect] = useState<boolean | null>(null);
   const [flashScore, setFlashScore] = useState({ correct: 0, total: 0 });
+  const [studyHighlightId, setStudyHighlightId] = useState<string | null>(null);
 
   const sidePoints = useMemo(
     () => getPointsForSide(data, side).map((p) => ({ ...p, side })),

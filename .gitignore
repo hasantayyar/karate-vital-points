@@ -1,5 +1,7 @@
 node_modules
 dist
+public/points.json
+.venv
 .DS_Store
 *.local
 .env
