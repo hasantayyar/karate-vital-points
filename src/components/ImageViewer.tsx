@@ -32,9 +32,9 @@ import DotTooltip from "./DotTooltip";
 import QuizPulseMarker from "./QuizPulseMarker";
 
 const DOT_RADIUS = 3.5;
-const NEAR_DOT_DISTANCE = 7;
-const TOUCH_TARGET_DESKTOP = 44;
-const TOUCH_TARGET_MOBILE = 52;
+const NEAR_DOT_DISTANCE = 5.5;
+const TOUCH_TARGET_DESKTOP = 38;
+const TOUCH_TARGET_MOBILE = 44;
 
 export interface ImageViewerProps {
   side: BodySide;
