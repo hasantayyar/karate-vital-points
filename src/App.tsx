@@ -5,6 +5,7 @@ import ImageViewer from "./components/ImageViewer";
 import Navbar from "./components/Navbar";
 import QuizMode from "./components/QuizMode";
 import { usePoints } from "./context/PointsContext";
+import { useCoarsePointer } from "./hooks/useCoarsePointer";
 import { getPlacedPoints, getPointsForSide, hasCoordinates, positionCount } from "./lib/points";
 import type { PlacedDot } from "./types";
 import {
@@ -41,8 +42,50 @@ function SideToggle({
   );
 }
 
+function StudyPointList({
+  sidePoints,
+  studyHighlightId,
+  onSelect,
+}: {
+  sidePoints: PlacedVitalPoint[];
+  studyHighlightId: string | null;
+  onSelect: (pointId: string) => void;
+}) {
+  return (
+    <ul className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-3">
+      {sidePoints.map((p) => {
+        const placed = hasCoordinates(p);
+        const isHighlighted = studyHighlightId === p.id;
+
+        return (
+          <li key={p.id}>
+            <button
+              type="button"
+              disabled={!placed}
+              onClick={() => onSelect(p.id)}
+              className={`w-full rounded-md border px-2 py-1.5 text-left transition-colors ${
+                isHighlighted
+                  ? "border-amber-500/70 bg-amber-950/50 text-amber-100 ring-1 ring-amber-500/40"
+                  : placed
+                    ? "border-stone-700 text-stone-300 hover:border-stone-600 hover:bg-stone-800/60"
+                    : "cursor-not-allowed border-stone-800 text-stone-600"
+              }`}
+            >
+              <span className="text-stone-500">{p.order}.</span> {p.name}
+              {positionCount(p) > 1 && (
+                <span className="text-stone-500"> ({positionCount(p)})</span>
+              )}
+            </button>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 export default function App() {
   const { data } = usePoints();
+  const coarsePointer = useCoarsePointer();
   const [mode, setMode] = useState<GameMode>("study");
   const [side, setSide] = useState<BodySide>("front");
 
@@ -54,6 +97,7 @@ export default function App() {
   const [lastFlashCorrect, setLastFlashCorrect] = useState<boolean | null>(null);
   const [flashScore, setFlashScore] = useState({ correct: 0, total: 0 });
   const [studyHighlightId, setStudyHighlightId] = useState<string | null>(null);
+  const [studyFocusRequest, setStudyFocusRequest] = useState(0);
 
   const sidePoints = useMemo(
     () => getPointsForSide(data, side).map((p) => ({ ...p, side })),
@@ -80,11 +124,13 @@ export default function App() {
 
   useEffect(() => {
     setStudyHighlightId(null);
+    setStudyFocusRequest(0);
   }, [side, mode]);
 
   const handleModeChange = (next: GameMode) => {
     setMode(next);
     setStudyHighlightId(null);
+    setStudyFocusRequest(0);
     setFlashFeedback({});
     setFlashAnswered(false);
     setLastFlashCorrect(null);
@@ -109,6 +155,16 @@ export default function App() {
       }
     }
   };
+
+  const handleStudyPointSelect = useCallback((pointId: string) => {
+    setStudyHighlightId((prev) => {
+      const selecting = prev !== pointId;
+      if (selecting) {
+        queueMicrotask(() => setStudyFocusRequest((request) => request + 1));
+      }
+      return selecting ? pointId : null;
+    });
+  }, []);
 
   const handleFlashcardClick = (dot: PlacedDot) => {
     if (!flashTarget || flashAnswered) return;
@@ -144,9 +200,18 @@ export default function App() {
 
         {mode === "study" && (
           <p className="text-center text-sm text-stone-400">
-            Hover or press a dot on the diagram, or tap a name in the list below to
-            highlight it.
+            {coarsePointer
+              ? "Tap a name to jump to it on the diagram. Close points show a picker."
+              : "Hover dots for names, or pick from the list to highlight."}
           </p>
+        )}
+
+        {mode === "study" && coarsePointer && (
+          <StudyPointList
+            sidePoints={sidePoints}
+            studyHighlightId={studyHighlightId}
+            onSelect={handleStudyPointSelect}
+          />
         )}
 
         {mode === "flashcards" && (
@@ -225,41 +290,20 @@ export default function App() {
                   : undefined
             }
             interactive={mode === "flashcards" ? !flashAnswered : true}
-            tapNearestDot={mode === "flashcards" && !flashAnswered}
+            tapNearestDot={
+              (mode === "study" && coarsePointer) ||
+              (mode === "flashcards" && !flashAnswered)
+            }
+            focusRequestId={mode === "study" ? studyFocusRequest : 0}
           />
         )}
 
-        {mode === "study" && (
-          <ul className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-3">
-            {sidePoints.map((p) => {
-              const placed = hasCoordinates(p);
-              const isHighlighted = studyHighlightId === p.id;
-
-              return (
-                <li key={p.id}>
-                  <button
-                    type="button"
-                    disabled={!placed}
-                    onClick={() =>
-                      setStudyHighlightId((prev) => (prev === p.id ? null : p.id))
-                    }
-                    className={`w-full rounded-md border px-2 py-1.5 text-left transition-colors ${
-                      isHighlighted
-                        ? "border-amber-500/70 bg-amber-950/50 text-amber-100 ring-1 ring-amber-500/40"
-                        : placed
-                          ? "border-stone-700 text-stone-300 hover:border-stone-600 hover:bg-stone-800/60"
-                          : "cursor-not-allowed border-stone-800 text-stone-600"
-                    }`}
-                  >
-                    <span className="text-stone-500">{p.order}.</span> {p.name}
-                    {positionCount(p) > 1 && (
-                      <span className="text-stone-500"> ({positionCount(p)})</span>
-                    )}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
+        {mode === "study" && !coarsePointer && (
+          <StudyPointList
+            sidePoints={sidePoints}
+            studyHighlightId={studyHighlightId}
+            onSelect={handleStudyPointSelect}
+          />
         )}
       </main>
     </div>

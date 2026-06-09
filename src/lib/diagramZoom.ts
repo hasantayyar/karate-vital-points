@@ -84,3 +84,94 @@ export function zoomAtPoint(
     panY: focalY - (focalY - transform.panY) * ratio,
   };
 }
+
+/** Pan and zoom so a diagram point (% coords) sits near the viewport center. */
+export function focusPoint(
+  point: { x: number; y: number },
+  viewportW: number,
+  viewportH: number,
+  overlayW: number,
+  overlayH: number,
+  targetScale = 2.5,
+): DiagramTransform {
+  const scale = clampZoom(targetScale);
+  const px = (point.x / 100) * overlayW;
+  const py = (point.y / 100) * overlayH;
+  const panX = viewportW / 2 - px * scale;
+  const panY = viewportH / 2 - py * scale;
+
+  return {
+    scale,
+    ...clampPan(panX, panY, scale, viewportW, viewportH, overlayW, overlayH),
+  };
+}
+
+export interface EnsurePointVisibleOptions {
+  /** Zoom in when at 1x (typically mobile list selection). */
+  allowZoom?: boolean;
+  maxAutoZoom?: number;
+  /** Fraction of viewport used as comfort margin (0–0.5). */
+  edgeMargin?: number;
+}
+
+/**
+ * Pan (and optionally zoom) only when the marker is outside a comfort zone.
+ * Preserves the user's current zoom when the point is already easy to see.
+ */
+export function ensurePointVisible(
+  current: DiagramTransform,
+  point: { x: number; y: number },
+  viewportW: number,
+  viewportH: number,
+  overlayW: number,
+  overlayH: number,
+  options: EnsurePointVisibleOptions = {},
+): DiagramTransform {
+  const {
+    allowZoom = false,
+    maxAutoZoom = 1.75,
+    edgeMargin = 0.18,
+  } = options;
+
+  if (viewportW <= 0 || viewportH <= 0 || overlayW <= 0 || overlayH <= 0) {
+    return current;
+  }
+
+  const px = (point.x / 100) * overlayW;
+  const py = (point.y / 100) * overlayH;
+  const screenX = current.panX + px * current.scale;
+  const screenY = current.panY + py * current.scale;
+
+  const marginX = viewportW * edgeMargin;
+  const marginY = viewportH * edgeMargin;
+  const inComfortZone =
+    screenX >= marginX &&
+    screenX <= viewportW - marginX &&
+    screenY >= marginY &&
+    screenY <= viewportH - marginY;
+
+  if (inComfortZone) {
+    return current;
+  }
+
+  let targetScale = current.scale;
+  if (allowZoom && current.scale < maxAutoZoom - 0.01) {
+    targetScale = clampZoom(maxAutoZoom);
+  }
+
+  const panX = viewportW / 2 - px * targetScale;
+  const panY = viewportH / 2 - py * targetScale;
+
+  return {
+    scale: targetScale,
+    ...clampPan(
+      panX,
+      panY,
+      targetScale,
+      viewportW,
+      viewportH,
+      overlayW,
+      overlayH,
+    ),
+  };
+}

@@ -3,6 +3,7 @@ import { Minus, Plus, RotateCcw } from "lucide-react";
 interface DiagramZoomControlsProps {
   scale: number;
   isZoomed: boolean;
+  coarsePointer?: boolean;
   onZoomIn: () => void;
   onZoomOut: () => void;
   onReset: () => void;
@@ -11,6 +12,7 @@ interface DiagramZoomControlsProps {
 export default function DiagramZoomControls({
   scale,
   isZoomed,
+  coarsePointer = false,
   onZoomIn,
   onZoomOut,
   onReset,
@@ -18,7 +20,9 @@ export default function DiagramZoomControls({
   return (
     <div className="flex flex-wrap items-center justify-between gap-2 border-b border-stone-800 bg-stone-900/80 px-3 py-2">
       <p className="text-xs text-stone-500 sm:text-sm">
-        Pinch or use +/− to zoom · drag to pan · double-tap to reset
+        {coarsePointer
+          ? "List jumps to point · pinch to zoom · double-tap to reset"
+          : "Pinch or use +/− to zoom · drag to pan when zoomed · double-tap to reset"}
       </p>
       <div className="flex items-center gap-1.5">
         <span className="min-w-[3rem] text-center text-xs tabular-nums text-stone-400">

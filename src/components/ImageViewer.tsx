@@ -6,6 +6,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type MouseEvent,
 } from "react";
 import {
   clientToPercent,
@@ -15,14 +16,18 @@ import {
 import { clientToPercentInViewport } from "../lib/diagramZoom";
 import {
   dotKey,
-  findNearestDot,
+  findNearDots,
   flattenDots,
+  isAmbiguousTap,
   percentToSvgCoords,
   roundCoord,
+  scaleAwareTapRadius,
 } from "../lib/points";
+import { useCoarsePointer } from "../hooks/useCoarsePointer";
 import { useDiagramZoom } from "../hooks/useDiagramZoom";
 import type { BodySide, DotFeedback, PlacedDot, PlacedVitalPoint } from "../types";
 import DiagramZoomControls from "./DiagramZoomControls";
+import DotPickerSheet from "./DotPickerSheet";
 import DotTooltip from "./DotTooltip";
 import QuizPulseMarker from "./QuizPulseMarker";
 
@@ -30,18 +35,6 @@ const DOT_RADIUS = 3.5;
 const NEAR_DOT_DISTANCE = 7;
 const TOUCH_TARGET_DESKTOP = 44;
 const TOUCH_TARGET_MOBILE = 52;
-
-function useCoarsePointer() {
-  const [coarse, setCoarse] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(pointer: coarse)");
-    const update = () => setCoarse(mq.matches);
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
-  return coarse;
-}
 
 export interface ImageViewerProps {
   side: BodySide;
@@ -60,6 +53,8 @@ export interface ImageViewerProps {
   onSvgClick?: (x: number, y: number) => void;
   interactive?: boolean;
   tapNearestDot?: boolean;
+  /** Increment to pan/zoom toward the selected point (list selection only). */
+  focusRequestId?: number;
 }
 
 export default function ImageViewer({
@@ -79,6 +74,7 @@ export default function ImageViewer({
   onSvgClick,
   interactive = true,
   tapNearestDot = false,
+  focusRequestId = 0,
 }: ImageViewerProps) {
   const imageVariant =
     mode === "flashcards" || mode === "quiz" ? "no-clue" : "default";
@@ -88,11 +84,38 @@ export default function ImageViewer({
 
   const overlayRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
+  const prevFocusRequestId = useRef(0);
+  const transformRef = useRef({ scale: 1, panX: 0, panY: 0 });
+  const handleTapRef = useRef<(clientX: number, clientY: number) => void>(() => {});
+  const [animateFocus, setAnimateFocus] = useState(false);
+
   const [imageReady, setImageReady] = useState(false);
   const [imageAspect, setImageAspect] = useState(1);
   const [hoveredDotKey, setHoveredDotKey] = useState<string | null>(null);
   const [pinnedDotKey, setPinnedDotKey] = useState<string | null>(null);
+  const [pickerCandidates, setPickerCandidates] = useState<PlacedDot[] | null>(null);
   const labelId = useId();
+
+  const isEditMode = mode === "edit";
+  const isStudyMode = mode === "study";
+  const isQuizMode = mode === "quiz";
+  const tooltipsEnabled = isStudyMode || isEditMode;
+
+  const studyOverlayPick =
+    isStudyMode && interactive && !!onDotClick && coarsePointer;
+  const canPickOnImage =
+    studyOverlayPick ||
+    (interactive && !!onDotClick && !isEditMode && (tapNearestDot || coarsePointer));
+  const dotsInteractive = interactive || isEditMode;
+  const dotButtonsInteractive = dotsInteractive && !(coarsePointer && canPickOnImage);
+
+  const allDots = flattenDots(points);
+  const renderedDots =
+    visibleDotKeys === null
+      ? allDots
+      : allDots.filter((d) =>
+          visibleDotKeys.includes(dotKey(d.pointId, d.positionIndex)),
+        );
 
   const {
     viewportRef,
@@ -100,6 +123,7 @@ export default function ImageViewer({
     resetTransform,
     zoomIn,
     zoomOut,
+    revealPoint,
     onPointerDown,
     onPointerMove,
     onPointerUp,
@@ -109,7 +133,13 @@ export default function ImageViewer({
   } = useDiagramZoom({
     enabled: true,
     resetKey: `${side}-${resolvedImageSrc}`,
+    onTap: canPickOnImage
+      ? (clientX, clientY) => handleTapRef.current(clientX, clientY)
+      : undefined,
   });
+
+  transformRef.current = transform;
+  const viewportConstrained = isZoomed;
 
   const syncImageFromElement = useCallback(() => {
     const img = imgRef.current;
@@ -135,23 +165,172 @@ export default function ImageViewer({
     return () => observer.disconnect();
   }, [resolvedImageSrc, syncImageFromElement]);
 
+  useEffect(() => {
+    prevFocusRequestId.current = 0;
+  }, [side, resolvedImageSrc]);
+
+  useLayoutEffect(() => {
+    if (
+      !isStudyMode ||
+      !selectedPointId ||
+      !imageReady ||
+      focusRequestId === 0 ||
+      focusRequestId === prevFocusRequestId.current
+    ) {
+      return;
+    }
+
+    const point = points.find((p) => p.id === selectedPointId);
+    const position = point?.positions[0];
+    if (!position) return;
+
+    prevFocusRequestId.current = focusRequestId;
+
+    const frame = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        setAnimateFocus(true);
+        revealPoint(position, {
+          allowZoom: coarsePointer,
+          maxAutoZoom: 1.75,
+          edgeMargin: coarsePointer ? 0.22 : 0.12,
+        });
+        window.setTimeout(() => setAnimateFocus(false), 320);
+      });
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [
+    isStudyMode,
+    selectedPointId,
+    imageReady,
+    focusRequestId,
+    points,
+    revealPoint,
+    coarsePointer,
+  ]);
+
+  const activateDot = useCallback(
+    (dot: PlacedDot) => {
+      if (!dotsInteractive) return;
+
+      const key = dotKey(dot.pointId, dot.positionIndex);
+
+      if (isStudyMode) {
+        setPinnedDotKey((prev) => (prev === key ? null : key));
+      }
+
+      onDotClick?.(dot);
+    },
+    [dotsInteractive, isStudyMode, onDotClick],
+  );
+
+  const mapClickToPercent = useCallback((clientX: number, clientY: number) => {
+    const overlay = overlayRef.current;
+    const viewport = viewportRef.current;
+    if (!overlay || !viewport) return null;
+
+    const t = transformRef.current;
+
+    if (t.scale > 1.01 || t.panX !== 0 || t.panY !== 0) {
+      return clientToPercentInViewport(
+        clientX,
+        clientY,
+        viewport.getBoundingClientRect(),
+        overlay.offsetWidth,
+        overlay.offsetHeight,
+        t,
+      );
+    }
+
+    return clientToPercent(clientX, clientY, overlay.getBoundingClientRect());
+  }, [viewportRef]);
+
+  const resolveTapAt = useCallback(
+    (clientX: number, clientY: number) => {
+      const coords = mapClickToPercent(clientX, clientY);
+      if (!coords) return;
+
+      const pool = visibleDotKeys === null ? allDots : renderedDots;
+      const maxDistance = scaleAwareTapRadius(
+        NEAR_DOT_DISTANCE,
+        transformRef.current.scale,
+      );
+      const candidates = findNearDots(
+        coords.x,
+        coords.y,
+        pool,
+        maxDistance,
+        imageAspect,
+      );
+
+      if (candidates.length === 0) return;
+
+      const showPicker =
+        candidates.length >= 2 &&
+        (coarsePointer || isAmbiguousTap(candidates));
+
+      if (showPicker) {
+        setPickerCandidates(candidates.map((c) => c.dot));
+        return;
+      }
+
+      activateDot(candidates[0].dot);
+    },
+    [
+      mapClickToPercent,
+      visibleDotKeys,
+      allDots,
+      renderedDots,
+      imageAspect,
+      coarsePointer,
+      activateDot,
+    ],
+  );
+
+  handleTapRef.current = resolveTapAt;
+
+  const handleDotActivate = useCallback(
+    (dot: PlacedDot, event: MouseEvent) => {
+      event.stopPropagation();
+      activateDot(dot);
+    },
+    [activateDot],
+  );
+
+  const handleOverlayClick = useCallback(
+    (event: MouseEvent<HTMLDivElement>) => {
+      if (shouldSuppressClick()) return;
+
+      if (isEditMode && onSvgClick) {
+        const coords = mapClickToPercent(event.clientX, event.clientY);
+        if (!coords) return;
+        onSvgClick(roundCoord(coords.x), roundCoord(coords.y));
+        return;
+      }
+
+      if (!canPickOnImage) return;
+
+      resolveTapAt(event.clientX, event.clientY);
+    },
+    [
+      shouldSuppressClick,
+      isEditMode,
+      onSvgClick,
+      canPickOnImage,
+      mapClickToPercent,
+      resolveTapAt,
+    ],
+  );
+
+  const handlePickerSelect = useCallback(
+    (dot: PlacedDot) => {
+      setPickerCandidates(null);
+      activateDot(dot);
+    },
+    [activateDot],
+  );
+
   const viewBoxW = svgViewBoxWidth(imageAspect);
-
-  const allDots = flattenDots(points);
-  const isEditMode = mode === "edit";
-  const isStudyMode = mode === "study";
-  const isQuizMode = mode === "quiz";
-  const tooltipsEnabled = isStudyMode || isEditMode;
-  const canPickOnImage = interactive && !!onDotClick && tapNearestDot;
-  const dotsInteractive = interactive || isEditMode;
-
-  const renderedDots =
-    visibleDotKeys === null
-      ? allDots
-      : allDots.filter((d) =>
-          visibleDotKeys.includes(dotKey(d.pointId, d.positionIndex)),
-        );
-
   const hasAnyMarkers = allDots.length > 0;
 
   const quizPulseCoords = useMemo(() => {
@@ -165,98 +344,18 @@ export default function ImageViewer({
   }, [allDots, quizPulseDotKey, quizPulsePosition]);
 
   const showQuizPulse = isQuizMode && quizPulseCoords !== null;
-
-  const mapClickToPercent = useCallback(
-    (clientX: number, clientY: number) => {
-      const overlay = overlayRef.current;
-      const viewport = viewportRef.current;
-      if (!overlay || !viewport) return null;
-
-      if (transform.scale > 1.01 || transform.panX !== 0 || transform.panY !== 0) {
-        return clientToPercentInViewport(
-          clientX,
-          clientY,
-          viewport.getBoundingClientRect(),
-          overlay.offsetWidth,
-          overlay.offsetHeight,
-          transform,
-        );
-      }
-
-      return clientToPercent(clientX, clientY, overlay.getBoundingClientRect());
-    },
-    [transform, viewportRef],
-  );
-
-  const handleDotActivate = useCallback(
-    (dot: PlacedDot, event: React.MouseEvent | React.PointerEvent) => {
-      if (!dotsInteractive) return;
-      event.stopPropagation();
-
-      const key = dotKey(dot.pointId, dot.positionIndex);
-
-      if (isStudyMode) {
-        setPinnedDotKey((prev) => (prev === key ? null : key));
-      }
-
-      onDotClick?.(dot);
-    },
-    [dotsInteractive, isStudyMode, onDotClick],
-  );
-
-  const handleOverlayClick = useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
-      if (shouldSuppressClick()) return;
-
-      if (isEditMode && onSvgClick) {
-        const coords = mapClickToPercent(event.clientX, event.clientY);
-        if (!coords) return;
-        onSvgClick(roundCoord(coords.x), roundCoord(coords.y));
-        return;
-      }
-
-      if (!canPickOnImage) return;
-
-      const coords = mapClickToPercent(event.clientX, event.clientY);
-      if (!coords) return;
-
-      const pool = visibleDotKeys === null ? allDots : renderedDots;
-      const nearest = findNearestDot(
-        coords.x,
-        coords.y,
-        pool,
-        NEAR_DOT_DISTANCE,
-        imageAspect,
-      );
-      if (nearest) {
-        handleDotActivate(nearest, event);
-      }
-    },
-    [
-      shouldSuppressClick,
-      isEditMode,
-      onSvgClick,
-      canPickOnImage,
-      mapClickToPercent,
-      visibleDotKeys,
-      allDots,
-      renderedDots,
-      handleDotActivate,
-      imageAspect,
-    ],
-  );
-
   const overlayClickable = isEditMode || canPickOnImage;
 
   return (
     <div
       className={`diagram-shell relative mx-auto w-full max-w-3xl rounded-xl border border-stone-700 bg-stone-900 shadow-lg ${
-        isZoomed ? "overflow-hidden" : "overflow-visible"
+        viewportConstrained ? "overflow-hidden" : "overflow-visible"
       }`}
     >
       <DiagramZoomControls
         scale={transform.scale}
         isZoomed={isZoomed}
+        coarsePointer={coarsePointer}
         onZoomIn={zoomIn}
         onZoomOut={zoomOut}
         onReset={resetTransform}
@@ -265,7 +364,7 @@ export default function ImageViewer({
       <div
         ref={viewportRef}
         className={`diagram-viewport relative touch-none ${
-          isZoomed
+          viewportConstrained
             ? "max-h-[min(82vh,920px)] overflow-hidden"
             : "overflow-visible"
         }`}
@@ -282,7 +381,7 @@ export default function ImageViewer({
               : canPickOnImage
                 ? "cursor-pointer"
                 : ""
-          }`}
+          } ${animateFocus ? "transition-transform duration-300 ease-out" : ""}`}
           style={{
             transform: `translate(${transform.panX}px, ${transform.panY}px) scale(${transform.scale})`,
             transformOrigin: "0 0",
@@ -380,8 +479,8 @@ export default function ImageViewer({
               </svg>
 
               <div
-                className={`absolute inset-0 ${dotsInteractive ? "" : "pointer-events-none"}`}
-                aria-hidden={!dotsInteractive}
+                className={`absolute inset-0 ${dotButtonsInteractive ? "" : "pointer-events-none"}`}
+                aria-hidden={!dotButtonsInteractive}
               >
                 {renderedDots.map((dot) => {
                   const key = dotKey(dot.pointId, dot.positionIndex);
@@ -481,6 +580,14 @@ export default function ImageViewer({
           mode to click the diagram and build{" "}
           <code className="text-amber-400">points.json</code>.
         </p>
+      )}
+
+      {pickerCandidates && (
+        <DotPickerSheet
+          candidates={pickerCandidates}
+          onSelect={handlePickerSelect}
+          onDismiss={() => setPickerCandidates(null)}
+        />
       )}
     </div>
   );

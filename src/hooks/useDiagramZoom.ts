@@ -8,23 +8,32 @@ import {
 import {
   clampPan,
   DEFAULT_TRANSFORM,
+  ensurePointVisible,
   type DiagramTransform,
+  type EnsurePointVisibleOptions,
   zoomAtPoint,
   ZOOM_STEP,
 } from "../lib/diagramZoom";
 
 const PAN_THRESHOLD_PX = 8;
+const TAP_THRESHOLD_PX = 14;
 const DOUBLE_TAP_MS = 320;
 
 interface UseDiagramZoomOptions {
   enabled?: boolean;
   resetKey?: string;
+  onTap?: (clientX: number, clientY: number) => void;
 }
 
 export function useDiagramZoom({
   enabled = true,
   resetKey = "",
+  onTap,
 }: UseDiagramZoomOptions = {}) {
+  const onTapRef = useRef(onTap);
+  useEffect(() => {
+    onTapRef.current = onTap;
+  }, [onTap]);
   const viewportRef = useRef<HTMLDivElement>(null);
   const [transform, setTransform] = useState<DiagramTransform>(DEFAULT_TRANSFORM);
   const pointersRef = useRef(
@@ -223,11 +232,12 @@ export function useDiagramZoom({
       if (pointersRef.current.size === 0) {
         panStartRef.current = null;
 
-        if (
-          entry &&
-          !suppressClickRef.current &&
-          Math.hypot(entry.x - entry.startX, entry.y - entry.startY) < PAN_THRESHOLD_PX
-        ) {
+        const travel = entry
+          ? Math.hypot(entry.x - entry.startX, entry.y - entry.startY)
+          : Infinity;
+        const isTap = entry && !suppressClickRef.current && travel < TAP_THRESHOLD_PX;
+
+        if (isTap) {
           const now = Date.now();
           const last = lastTapRef.current;
           if (
@@ -242,6 +252,7 @@ export function useDiagramZoom({
             return;
           }
           lastTapRef.current = { time: now, x: entry.x, y: entry.y };
+          onTapRef.current?.(entry.x, entry.y);
         }
       } else if (pointersRef.current.size === 1) {
         const remaining = [...pointersRef.current.values()][0];
@@ -262,12 +273,37 @@ export function useDiagramZoom({
 
   const shouldSuppressClick = useCallback(() => suppressClickRef.current, []);
 
+  const revealPoint = useCallback(
+    (point: { x: number; y: number }, options?: EnsurePointVisibleOptions) => {
+      const viewport = viewportRef.current;
+      if (!viewport) return;
+
+      const overlay = viewport.firstElementChild as HTMLElement | null;
+      if (!overlay) return;
+
+      const { width: viewportW, height: viewportH } = viewport.getBoundingClientRect();
+      applyTransform(
+        ensurePointVisible(
+          transform,
+          point,
+          viewportW,
+          viewportH,
+          overlay.offsetWidth,
+          overlay.offsetHeight,
+          options,
+        ),
+      );
+    },
+    [applyTransform, transform],
+  );
+
   return {
     viewportRef,
     transform,
     resetTransform,
     zoomIn,
     zoomOut,
+    revealPoint,
     onPointerDown,
     onPointerMove,
     onPointerUp,
