@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { CheckCircle2, RotateCcw, XCircle } from "lucide-react";
 import CoordinateEditor from "./components/CoordinateEditor";
+import FlashcardFeedbackBar from "./components/FlashcardFeedbackBar";
 import ImageViewer from "./components/ImageViewer";
 import Navbar from "./components/Navbar";
 import QuizMode from "./components/QuizMode";
@@ -95,6 +95,7 @@ export default function App() {
   );
   const [flashAnswered, setFlashAnswered] = useState(false);
   const [lastFlashCorrect, setLastFlashCorrect] = useState<boolean | null>(null);
+  const [flashClickedName, setFlashClickedName] = useState<string | null>(null);
   const [flashScore, setFlashScore] = useState({ correct: 0, total: 0 });
   const [studyHighlightId, setStudyHighlightId] = useState<string | null>(null);
   const [studyFocusRequest, setStudyFocusRequest] = useState(0);
@@ -120,6 +121,7 @@ export default function App() {
     setFlashFeedback({});
     setFlashAnswered(false);
     setLastFlashCorrect(null);
+    setFlashClickedName(null);
   }, [placedOnSide]);
 
   useEffect(() => {
@@ -134,6 +136,7 @@ export default function App() {
     setFlashFeedback({});
     setFlashAnswered(false);
     setLastFlashCorrect(null);
+    setFlashClickedName(null);
     if (next === "flashcards") {
       startNextFlashcard();
     } else {
@@ -172,6 +175,7 @@ export default function App() {
     const correct = dot.pointId === flashTarget.id;
     setFlashAnswered(true);
     setLastFlashCorrect(correct);
+    setFlashClickedName(dot.pointName);
     setFlashScore((s) => ({
       correct: s.correct + (correct ? 1 : 0),
       total: s.total + 1,
@@ -190,7 +194,9 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen pb-12">
+    <div
+      className={`min-h-screen ${mode === "flashcards" && flashAnswered ? "pb-44" : "pb-12"}`}
+    >
       <Navbar mode={mode} onModeChange={handleModeChange} />
 
       <main className="mx-auto max-w-3xl space-y-6 px-4 pt-6">
@@ -214,8 +220,8 @@ export default function App() {
           />
         )}
 
-        {mode === "flashcards" && (
-          <div className="space-y-3 rounded-lg border border-stone-800 bg-stone-900/60 px-4 py-3 text-center">
+        {mode === "flashcards" && !flashAnswered && (
+          <div className="space-y-2 rounded-lg border border-stone-800 bg-stone-900/60 px-4 py-3 text-center">
             {placedOnSide.length === 0 ? (
               <p className="text-sm text-amber-400/90">
                 Place coordinates in Edit mode first, then try flashcards.
@@ -230,32 +236,7 @@ export default function App() {
                 </p>
                 <p className="text-xs text-stone-500">
                   Score: {flashScore.correct} / {flashScore.total}
-                  {flashAnswered && lastFlashCorrect !== null && (
-                    <span className="ml-2 inline-flex items-center gap-1">
-                      {lastFlashCorrect ? (
-                        <>
-                          <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-                          Correct
-                        </>
-                      ) : (
-                        <>
-                          <XCircle className="h-3.5 w-3.5 text-red-500" />
-                          Incorrect
-                        </>
-                      )}
-                    </span>
-                  )}
                 </p>
-                {flashAnswered && (
-                  <button
-                    type="button"
-                    onClick={startNextFlashcard}
-                    className="inline-flex items-center gap-2 rounded-md bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-600"
-                  >
-                    <RotateCcw className="h-4 w-4" />
-                    Next card
-                  </button>
-                )}
               </>
             ) : null}
           </div>
@@ -306,6 +287,19 @@ export default function App() {
           />
         )}
       </main>
+
+      {mode === "flashcards" &&
+        flashAnswered &&
+        flashTarget &&
+        lastFlashCorrect !== null && (
+          <FlashcardFeedbackBar
+            correct={lastFlashCorrect}
+            targetName={flashTarget.name}
+            clickedName={flashClickedName}
+            score={flashScore}
+            onNext={startNextFlashcard}
+          />
+        )}
     </div>
   );
 }

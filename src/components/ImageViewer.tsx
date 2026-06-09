@@ -99,6 +99,7 @@ export default function ImageViewer({
   const isEditMode = mode === "edit";
   const isStudyMode = mode === "study";
   const isQuizMode = mode === "quiz";
+  const isFlashcardMode = mode === "flashcards";
   const tooltipsEnabled = isStudyMode || isEditMode;
 
   const studyOverlayPick =
@@ -425,12 +426,15 @@ export default function ImageViewer({
                     Math.hypot(dot.x - quizPulseCoords.x, dot.y - quizPulseCoords.y) <
                       1.5;
                   const isPulsing = pulseDotKey === key || isQuizPulseDot;
+                  const hasFeedback = feedback !== "none";
                   const { cx, cy } = percentToSvgCoords(dot.x, dot.y, imageAspect);
                   const dotR = isQuizPulseDot
                     ? 1.2
-                    : isPulsing
-                      ? (DOT_RADIUS * 1.5) / 10
-                      : DOT_RADIUS / 10;
+                    : hasFeedback && isFlashcardMode
+                      ? (DOT_RADIUS * 2.4) / 10
+                      : isPulsing
+                        ? (DOT_RADIUS * 1.5) / 10
+                        : DOT_RADIUS / 10;
 
                   const fill = isQuizPulseDot || isPulsing
                     ? "#f59e0b"
@@ -464,6 +468,15 @@ export default function ImageViewer({
                           className="quiz-ping-ring"
                         />
                       )}
+                      {hasFeedback && isFlashcardMode && (
+                        <circle
+                          cx={cx}
+                          cy={cy}
+                          r={dotR * 2.2}
+                          fill={feedback === "correct" ? "#22c55e" : "#ef4444"}
+                          fillOpacity={0.35}
+                        />
+                      )}
                       <circle
                         cx={cx}
                         cy={cy}
@@ -471,7 +484,15 @@ export default function ImageViewer({
                         fill={fill}
                         fillOpacity={0.95}
                         stroke={stroke}
-                        strokeWidth={isPulsing ? 0.5 : isSelected ? 0.45 : 0.3}
+                        strokeWidth={
+                          hasFeedback && isFlashcardMode
+                            ? 0.55
+                            : isPulsing
+                              ? 0.5
+                              : isSelected
+                                ? 0.45
+                                : 0.3
+                        }
                       />
                     </g>
                   );
