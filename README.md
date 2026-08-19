@@ -18,7 +18,8 @@ npm run build
 npm run dev
 ```
 
-Place your diagram at `public/vital-points.jpeg`.
+Preview:
+![screenshot](assets/screenshot.png)
 
 ## Creating `points.json`
 
